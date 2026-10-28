@@ -53,30 +53,15 @@ Dry runs record the decision and plan, with no approval creation, execution rese
 
 ```mermaid
 flowchart TD
-    RUNBOOKS["Validated runbook registry"] --> CHECK["Match incident and apply risk policy<br/>Deterministic rules; no AI"]
-    CHECK -->|"T0 / T1: low risk, within limits"| AUTO["Automatic remediation path"]
-    CHECK -->|"T2: approval required"| QUEUE["Priority / approval queue"]
-    CHECK -->|"T3, ambiguous, or policy refused"| ESCALATE["Escalate to operator<br/>No remediation"]
-
-    AUTO --> GATE["Recheck state, kill switch,<br/>approval and action limits"]
-    QUEUE --> REVIEW["Operator reviews evidence<br/>and records a reason"]
-    REVIEW -->|"Approve"| GATE
-    REVIEW -->|"Deny, expire, or stale state"| ESCALATE
-
-    GATE -->|"All checks pass"| EXECUTE["Execute scoped, typed runbook steps"]
-    GATE -->|"Any check fails"| ESCALATE
-    EXECUTE --> VERIFY{"Health check"}
-    VERIFY -->|"Improved"| DONE["Close change as RESOLVED"]
-    VERIFY -->|"Failed, interrupted, or unhealthy"| ROLLBACK["Attempt one bounded compensation"]
-    ROLLBACK --> ROLLBACK_CHECK{"Rollback verified?"}
-    ROLLBACK_CHECK -->|"Restored; escalate for review"| ESCALATE
-    ROLLBACK_CHECK -->|"Restore failed; escalate urgently"| ESCALATE
-
-    DONE --> AUDIT["Record decision, approval, actions,<br/>verification and outcome in audit trail"]
-    ESCALATE --> AUDIT
-    DONE -.-> REGISTRY_REVIEW["Optional engineer review<br/>and runbook definition update"]
-    REGISTRY_REVIEW -.->|"Reviewed change; never automatic learning"| RUNBOOKS
+    RUNBOOKS["List of Runbooks"] --> SEGREGATION["Risk Segregation<br/>(policy-based in this demo)"]
+    SEGREGATION -->|"Low risk"| AUTOMATION["Automation"]
+    SEGREGATION -->|"High risk"| QUEUE["Added to Priority Queue"]
+    AUTOMATION --> SOLVED["Solved Solution"]
+    SOLVED -->|"Check for security issues;<br/>if uncertain, send for review"| QUEUE
+    SOLVED -.->|"New solved remediation added"| RUNBOOKS
 ```
+
+The sketch shows the workflow at a glance. In this demo, risk segregation uses deterministic policy rules rather than an AI model.
 
 `policy.decide(candidate, observation, context)` performs no I/O. Checks stop at the first failure: kill switch, circuit breaker, match/confidence/unknown state, T3 prohibition, blast radius, global rate limit, and tier approval rule. The returned `Decision` is evidence, not an execution credential. `PolicyAuthority` re-evaluates the decision and issues an opaque grant bound to action ID and the hash of the exact runbook. The executor verifies that grant and the entire plan's capabilities before the first adapter action.
 
