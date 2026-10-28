@@ -135,6 +135,31 @@ class ApprovalQueue:
         return self._append(self.get(request_id), "CONSUMED")
 
     @synchronized
+    def invalidate(self, request_id, reason):
+        self.expire()
+        request = self.get(request_id)
+        if not request or request["status"] not in ("PENDING", "APPROVED", "CONSUMED"):
+            return request
+        metadata = {
+            "name": "aegisops",
+            "timestamp": datetime.fromtimestamp(
+                self.store.clock(), timezone.utc
+            ).isoformat(),
+            "reason": reason,
+        }
+        revoked = self._append(request, "REVOKED", revoked_by=metadata)
+        self.store.write(
+            request["action_id"],
+            request["runbook"],
+            request["observation"],
+            Decision("REFUSE", [f"Approval revoked: {reason}"], {"approval": False}),
+            event="approval_revoked",
+            final_outcome="ESCALATE",
+            approver=metadata,
+        )
+        return revoked
+
+    @synchronized
     def close(self, request_id):
         r = self.get(request_id)
         if r and r["status"] == "CONSUMED":

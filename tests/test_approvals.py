@@ -47,10 +47,41 @@ def test_timeout_denies_and_audits():
 
 def test_changed_state_does_not_use_old_approval():
     e, rid = pending()
+    approved_state = e.adapter.read_state()
     e.approvals.approve(rid, "operator", "reviewed")
     e.adapter.state["cert_expires_in_hours"] = 1
+
+    assert e.resume(rid)["outcome"] == "ESCALATE"
+    assert e.approvals.get(rid)["status"] == "REVOKED"
+    assert not e.adapter.calls
+
+
+    e.adapter.state = approved_state
     assert e.resume(rid)["outcome"] == "ESCALATE"
     assert not e.adapter.calls
+
+
+def test_policy_refusal_invalidates_approved_request():
+    e, rid = pending()
+    e.approvals.approve(rid, "operator", "reviewed")
+    e.killswitch.set(True)
+
+    assert e.resume(rid)["outcome"] == "REFUSE"
+    assert e.approvals.get(rid)["status"] == "REVOKED"
+
+    e.killswitch.set(False)
+    assert e.resume(rid)["outcome"] == "ESCALATE"
+    assert e.adapter.calls == []
+
+
+def test_changed_incident_invalidates_approved_request():
+    e, rid = pending()
+    e.approvals.approve(rid, "operator", "reviewed")
+    e.adapter.inject("cert_expiring")
+
+    assert e.resume(rid)["outcome"] == "ESCALATE"
+    assert e.approvals.get(rid)["status"] == "REVOKED"
+    assert e.adapter.calls == []
 
 
 def test_revocation_after_mutation_rolls_back():

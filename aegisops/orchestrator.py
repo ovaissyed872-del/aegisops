@@ -389,6 +389,10 @@ class Engine:
                 or rb != request["runbook"]
                 or getattr(self.adapter, "incident_id", None) != request["incident_id"]
             ):
+                self.approvals.invalidate(
+                    request_id,
+                    "Approved observation, runbook, or incident binding changed",
+                )
                 return self._finish_without_execution(
                     action_id,
                     rb,
@@ -410,6 +414,11 @@ class Engine:
                 approver=self.approvals.approver(request_id),
             )
             if d.outcome != "NEEDS_APPROVAL":
+                self.approvals.invalidate(
+                    request_id,
+                    "Policy no longer permits the approved action: "
+                    + "; ".join(d.reasons),
+                )
                 return self._finish_without_execution(action_id, rb, obs, d)
             try:
                 return self._execute(

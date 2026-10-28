@@ -19,7 +19,18 @@ def post(client, url, data):
 
 
 @pytest.mark.parametrize(
-    "path", ["/", "/approvals", "/audit", "/runbooks", "/api/status", "/api/audit"]
+    "path",
+    [
+        "/",
+        "/approvals",
+        "/audit",
+        "/runbooks",
+        "/api/status",
+        "/api/audit",
+        "/static/app.css",
+        "/static/incident.css",
+        "/static/app.js",
+    ],
 )
 def test_pages(client, path):
     c, _ = client

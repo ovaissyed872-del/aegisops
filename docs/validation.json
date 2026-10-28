@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-10-28T10:56:16.870436+00:00",
-  "python": "3.12.14",
+  "generated_at": "2026-10-28T15:15:00+00:00",
+  "python": "3.12.5",
   "packages": {
     "Flask": "3.1.3",
     "SQLAlchemy": "2.1.6",
     "PyYAML": "6.0.3",
     "pytest": "9.2.0"
   },
-  "pytest_passed": 105,
+  "pytest_passed": 110,
   "authored_scenarios_passed": 13,
   "cold_runbooks_passed": 3,
   "demo_cases_passed": 6,
@@ -29,7 +29,7 @@
         "-q"
       ],
       "exit_code": 0,
-      "stdout_summary": "105 passed in 2.94s",
+      "stdout_summary": "110 passed in 3.15s",
       "stderr": ""
     },
     {

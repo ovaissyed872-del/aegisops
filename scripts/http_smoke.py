@@ -45,6 +45,7 @@ def main():
             "/audit",
             "/runbooks",
             "/static/app.css",
+            "/static/incident.css",
             "/static/app.js",
         ]:
             assert len(get(path)) > 0
